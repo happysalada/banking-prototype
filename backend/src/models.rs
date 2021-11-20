@@ -6,6 +6,6 @@ use std::default::Default;
 pub struct User {
     pub id: String,
     pub name: String,
-    pub email: Option<String>,
+    pub email: String,
     pub insterted_at: i32,
 }

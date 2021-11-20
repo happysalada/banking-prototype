@@ -1,17 +1,34 @@
----
-// Component Imports
-import Button from '../components/Button.astro';
+<script lang="ts">
+  import Flash from '$lib/Flash.svelte';
+  import { createUser } from "$lib/api";
 
-// Full Astro Component Syntax:
-// https://docs.astro.build/core-concepts/astro-components/
----
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <title>Astro + TailwindCSS</title>
-    <link rel="stylesheet" type="text/css" href={Astro.resolve("../styles/global.css")}>
-  </head>
+  let name = "";
+  let email = "";
+  let password = "";
+  let flashMessage = "";
+
+  async function handleSubmit() {
+    console.log("clicked")
+    if (name === "" || email === "") return;
+    try {
+      const promise = createUser({ name, email });
+      name = "";
+      email = "";
+      password = "";
+      const response = await promise;
+      const { data, errors } = await response.json();
+      if (errors && errors.length > 0) {
+        flashMessage = errors
+          .map(({ message }) => message.toString())
+          .join("\n");
+        console.error(flashMessage);
+        return;
+      }
+    } catch (error) {
+      flashMessage = error.toString();
+    }
+  }
+</script>
 
   <div class="relative bg-gray-800 overflow-hidden">
     <div class="hidden sm:block sm:absolute sm:inset-0" aria-hidden="true">
@@ -101,8 +118,10 @@ import Button from '../components/Button.astro';
           </div>
         </div>
       </div>
+
   
       <main class="mt-16 sm:mt-24">
+        <Flash message={flashMessage} />
         <div class="mx-auto max-w-7xl">
           <div class="lg:grid lg:grid-cols-12 lg:gap-8">
             <div class="px-4 sm:px-6 sm:text-center md:max-w-2xl md:mx-auto lg:col-span-6 lg:text-left lg:flex lg:items-center">
@@ -191,7 +210,7 @@ import Button from '../components/Button.astro';
                       </div>
   
                       <div>
-                        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <button type="submit" onclick={handleSubmit} class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                           Create your account
                         </button>
                       </div>
@@ -208,4 +227,3 @@ import Button from '../components/Button.astro';
       </main>
     </div>
   </div>
-</html>
