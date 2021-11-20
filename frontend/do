@@ -1,0 +1,21 @@
+#!/run/current-system/sw/bin/oil
+
+proc dev() {
+  pnpm dev
+}
+
+proc build() {
+  rm -rf build
+  pnpm build
+}
+
+proc deploy(name) {
+  build
+  wrangler publish --env $name
+}
+
+proc update_deps() {
+  pnpm up --interactive --latest
+}
+
+@ARGV
