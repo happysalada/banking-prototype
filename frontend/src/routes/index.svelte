@@ -8,7 +8,6 @@
   let flashMessage = "";
 
   async function handleSubmit() {
-    console.log("clicked")
     if (name === "" || email === "") return;
     try {
       const promise = createUser({ name, email });
@@ -25,6 +24,7 @@
         return;
       }
     } catch (error) {
+      console.log(error)
       flashMessage = error.toString();
     }
   }
@@ -193,15 +193,19 @@
                   </div>
   
                   <div class="mt-6">
-                    <form action="#" method="POST" class="space-y-6">
+                    <form  on:submit|preventDefault={handleSubmit} class="space-y-6">
                       <div>
                         <label for="name" class="sr-only">Full name</label>
-                        <input type="text" name="name" id="name" autocomplete="name" placeholder="Full name" required class="block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300 rounded-md">
+                        <input
+                          bind:value={name}
+                          type="text" name="name" id="name" autocomplete="name" placeholder="Full name" required class="block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300 rounded-md">
                       </div>
   
                       <div>
                         <label for="mobile-or-email" class="sr-only">Mobile number or email</label>
-                        <input type="text" name="mobile-or-email" id="mobile-or-email" autocomplete="email" placeholder="Mobile number or email" required class="block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300 rounded-md">
+                        <input
+                          bind:value={email}
+                          type="text" name="mobile-or-email" id="mobile-or-email" autocomplete="email" placeholder="Mobile number or email" required class="block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300 rounded-md">
                       </div>
   
                       <div>
@@ -210,7 +214,7 @@
                       </div>
   
                       <div>
-                        <button type="submit" onclick={handleSubmit} class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                           Create your account
                         </button>
                       </div>

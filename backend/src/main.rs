@@ -1,11 +1,13 @@
 use async_graphql::{
     http::{playground_source, GraphQLPlaygroundConfig},
-    Context, EmptyMutation, EmptySubscription, FieldResult, Object, Request, Response, Schema,
+    Context, EmptySubscription, FieldResult, Object, Request, Response, Schema,
 };
 use models::User;
 use poem::{
     get, handler,
+    http::Method,
     listener::TcpListener,
+    middleware::Cors,
     web::{Data, Html, Json},
     EndpointExt, IntoResponse, Route, Server,
 };
@@ -41,8 +43,8 @@ impl Mutation {
         let pool = context.data::<SqlitePool>().unwrap();
         let inserted = sqlx::query_as::<_, User>(
             "
-            INSERT INTO agents (id, name, email)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO users (id, name, email)
+            VALUES (?, ?, ?)
             RETURNING *
         ",
         )
@@ -55,7 +57,7 @@ impl Mutation {
     }
 }
 
-type BankingSchema = Schema<Query, EmptyMutation, EmptySubscription>;
+type BankingSchema = Schema<Query, Mutation, EmptySubscription>;
 
 #[handler]
 async fn graphql_handler(schema: Data<&BankingSchema>, req: Json<Request>) -> Json<Response> {
@@ -79,17 +81,27 @@ async fn main() -> Result<(), std::io::Error> {
             .await
             .expect("failed to get a db connection");
 
-    let schema = Schema::build(Query, EmptyMutation, EmptySubscription)
+    let schema = Schema::build(Query, Mutation, EmptySubscription)
         .data(pool)
         .finish();
+    let cors =
+        Cors::new()
+            .allow_origin("*")
+            .allow_methods([Method::POST, Method::GET, Method::OPTIONS]);
 
     let app = Route::new()
-        .at("/", get(graphql_playground).post(graphql_handler))
-        .data(schema);
+        .at(
+            "/graphql",
+            get(graphql_playground)
+                .options(graphql_handler)
+                .post(graphql_handler),
+        )
+        .data(schema)
+        .with(cors);
 
-    println!("Playground: http://localhost:3000");
+    println!("Playground: http://localhost:5050");
 
-    let listener = TcpListener::bind("127.0.0.1:3000");
+    let listener = TcpListener::bind("127.0.0.1:5050");
     let server = Server::new(listener).await?;
     server.run(app).await
 }

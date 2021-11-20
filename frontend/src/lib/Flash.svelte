@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { FlashType } from "$lib/types";
   export let message: string | undefined;
-  export let type: FlashType;
+  export let type: FlashType = 'ERROR';
 
   $: setTimeout(() => (message = undefined), 10000);
 </script>
