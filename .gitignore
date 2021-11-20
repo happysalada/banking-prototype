@@ -1,0 +1,4 @@
+.direnv
+frontend/node_modules
+backend/target
+backend/db

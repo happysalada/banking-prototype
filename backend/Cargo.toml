@@ -1,0 +1,15 @@
+[package]
+name = "backend"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+poem = "1.0"
+serde = "1.0"
+tokio = { version = "1.13.0", features = ["rt-multi-thread", "macros"] }
+async-graphql = "2.10.1"
+sqlx = { version = "0.5.9", features = ["sqlite", "runtime-tokio-native-tls", "macros", "migrate"] }
+ulid = { version = "0.4.1", features = ["serde"] }
+tracing-subscriber = "0.3"
