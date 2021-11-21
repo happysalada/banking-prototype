@@ -1,7 +1,7 @@
 { pkgs, config, lib, ... }:
 with lib;
 let
-  serviceConfig = config.services.vf-backend;
+  serviceConfig = config.services.kraken;
 in
 {
   options.services.kraken = {
