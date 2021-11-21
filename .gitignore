@@ -2,3 +2,7 @@
 frontend/node_modules
 backend/target
 backend/db
+frontend/workers-site
+frontend/dist
+frontend/.svelte-kit
+frontend/build

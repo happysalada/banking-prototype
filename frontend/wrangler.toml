@@ -1,0 +1,11 @@
+type = "webpack"
+name = "kraken"
+workers_dev = true
+account_id = "46d381004464b9e0c88b3bb5a0f0f100"
+zone_id = "b1da17954f08969ba7a78e4cb14d7fbe"
+compatibility_date = "2021-10-23"
+routes = ["kraken.union.rocks/*"]
+
+[site]
+bucket = "./build"
+entry-point = "workers-site"

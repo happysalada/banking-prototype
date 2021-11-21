@@ -9,9 +9,9 @@ proc build() {
   pnpm build
 }
 
-proc deploy(name) {
+proc deploy() {
   build
-  wrangler publish --env $name
+  wrangler publish
 }
 
 proc update_deps() {

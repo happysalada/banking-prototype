@@ -1,4 +1,5 @@
-const base = "http://localhost:5051";
+import { variables } from "$lib/env";
+const base = variables.apiUrl;
 
 export async function query(
   fetch: (info: RequestInfo, init?: RequestInit) => Promise<Response>,

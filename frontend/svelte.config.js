@@ -12,7 +12,7 @@ export default {
     }),
   ],
   kit: {
-    // adapter: adapter({fallback: 'index.html'}),
+    adapter: adapter({ fallback: "index.html" }),
     prerender: {
       enabled: false,
     },
