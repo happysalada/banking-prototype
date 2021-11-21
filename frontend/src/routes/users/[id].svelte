@@ -8,6 +8,7 @@
       `{
         user(userId: "${id}") { id, name, email } 
         transactions(userId: "${id}") { id, fromId, toId, amount, note, insertedAt }
+        users { id, name, email}
       }`
     );
 
@@ -22,10 +23,10 @@
           props: { flashMessage },
         };
       } else {
-        const { user, transactions } = data;
+        const { user, transactions, users } = data;
 
         return {
-          props: { user, transactions },
+          props: { user, transactions, users, userId: id },
         };
       }
     } else {
@@ -40,10 +41,168 @@
 </script>
 
 <script lang="ts">
-  import type { Transaction, User } from "$lib/types";
+  import Flash from '$lib/Flash.svelte';
+  import { createTransaction } from "$lib/api";
+  import type { FlashType, Transaction, User } from "$lib/types";
   export let user: User;
+  export let users: User[];
   export let transactions: Transaction[];
+  export let userId: string;
+  let overlay = false;
+  let amount = 0;
+  let note: string | undefined;
+  let toId: string | undefined;
+  let flashMessage = "";
+  let flashType: FlashType = 'ERROR';
+
+  async function handleSubmit() {
+    if (!toId || amount === 0) return;
+    try {
+      const promise = createTransaction({ fromId: userId, toId, amount, note });
+      toId = undefined;
+      amount = 0;
+      note = undefined;
+      const response = await promise;
+      const { data, errors } = await response.json();
+      if (errors && errors.length > 0) {
+        flashMessage = errors
+          .map(({ message }) => message.toString())
+          .join("\n");
+        flashType = "ERROR";
+        console.error(flashMessage);
+        return;
+      }
+
+      const { createTransaction: created } = data;
+      transactions = [created, ...transactions];
+      overlay = false;
+    } catch (error) {
+      flashMessage = error.toString();
+      flashType = "ERROR";
+    }
+  }
 </script>
+
+<Flash message={flashMessage} type={flashType} />
+
+{#if overlay}
+
+<div class="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <!--
+      Background overlay, show/hide based on modal state.
+
+      Entering: "ease-out duration-300"
+        From: "opacity-0"
+        To: "opacity-100"
+      Leaving: "ease-in duration-200"
+        From: "opacity-100"
+        To: "opacity-0"
+    -->
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+    <!-- This element is to trick the browser into centering the modal contents. -->
+    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+    <!--
+      Modal panel, show/hide based on modal state.
+
+      Entering: "ease-out duration-300"
+        From: "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+        To: "opacity-100 translate-y-0 sm:scale-100"
+      Leaving: "ease-in duration-200"
+        From: "opacity-100 translate-y-0 sm:scale-100"
+        To: "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+    -->
+    <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+      <div class="hidden sm:block absolute top-0 right-0 pt-4 pr-4">
+        <button
+          type="button"
+          class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          on:click={() => overlay = false}
+        >
+          <span class="sr-only">Close</span>
+          <!-- Heroicon name: outline/x -->
+          <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="sm:flex sm:items-start">
+        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+          <!-- Heroicon name: outline/exclamation -->
+          <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+          <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+            Send money
+          </h3>
+          <div class="mt-2 mb-2">
+            <p class="text-sm text-gray-500">
+              Double check the informations before sending, there is no going back!
+            </p>
+          </div>
+          <div class="grid grid-cols-6 gap-6">
+            <div class="col-span-6 sm:col-span-3">
+              <label for="country" class="block text-sm font-medium text-gray-700">To</label>
+              <select id="country" name="country" autocomplete="country-name" class="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                {#each users as user (user.id)}
+                <option
+                  on:click={() => toId = user.id}
+                  >{user.name}</option>
+                {/each}
+              </select>
+            </div>
+
+            <div class="col-span-3">
+              <label for="street-address" class="block text-sm font-medium text-gray-700">Amount</label>
+              <input
+                type="number"
+                name="amount"
+                id="amount"
+                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                bind:value={amount}
+              >
+            </div>
+
+            <div class="col-span-6">
+              <label for="street-address" class="block text-sm font-medium text-gray-700">Note</label>
+              <div class="mt-1">
+                <textarea
+                  id="note"
+                  name="note"
+                  rows="3"
+                  class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md" placeholder="you@example.com"
+                  bind:value={note}
+                 ></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+        <button
+          type="button"
+          class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+          on:click={handleSubmit}
+        >
+          Send
+        </button>
+        <button
+          type="button"
+          class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
+          on:click={() => overlay = false}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{/if}
 
 <div class="min-h-full">
   <!-- Off-canvas menu for mobile, show/hide based on off-canvas menu state. -->
@@ -82,7 +241,10 @@
           To: "opacity-0"
       -->
       <div class="absolute top-0 right-0 -mr-12 pt-2">
-        <button type="button" class="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+        <button
+          type="button"
+          class="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+        >
           <span class="sr-only">Close sidebar</span>
           <!-- Heroicon name: outline/x -->
           <svg class="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -360,7 +522,11 @@
               </div>
             </div>
             <div class="mt-6 flex space-x-3 md:mt-0 md:ml-4">
-              <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500">
+              <button
+                type="button"
+                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
+                on:click={() => overlay = true}
+              >
                 Send money
               </button>
             </div>
@@ -390,7 +556,7 @@
                       </dt>
                       <dd>
                         <div class="text-lg font-medium text-gray-900">
-                          $ {transactions.reduce((total, {amount}) => total + amount, 0)}
+                          $ {transactions.reduce((total, {amount, fromId}) => fromId === userId ? total - amount : total + amount, 0)}
                         </div>
                       </dd>
                     </dl>
@@ -428,7 +594,7 @@
                     </svg>
                     <span class="flex flex-col text-gray-500 text-sm truncate">
                       <span class="truncate">{transaction.note}</span>
-                      <span><span class="text-gray-900 font-medium">${transaction.amount}</span> USD</span>
+                      <span><span class="text-gray-900 font-medium">${ transaction.fromId === userId ? - transaction.amount : transaction.amount}</span> USD</span>
                       <time datetime="2020-07-11">{transaction.insertedAt}</time>
                     </span>
                   </span>
@@ -495,7 +661,7 @@
                         </div>
                       </td>
                       <td class="px-6 py-4 text-right whitespace-nowrap text-sm text-gray-500">
-                        <span class="text-gray-900 font-medium">$ {transaction.amount}</span>
+                        <span class="text-gray-900 font-medium">$ {transaction.fromId === userId ? - transaction.amount : transaction.amount}</span>
                         USD
                       </td>
                       <td class="hidden px-6 py-4 whitespace-nowrap text-sm text-gray-500 md:block">

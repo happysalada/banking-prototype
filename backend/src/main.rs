@@ -45,9 +45,10 @@ impl Query {
     ) -> FieldResult<Vec<Transaction>> {
         let pool = context.data::<SqlitePool>().unwrap();
         let transactions = sqlx::query_as::<_, Transaction>(
-            "SELECT * FROM transactions WHERE id = ? ORDER BY inserted_at DESC",
+            "SELECT * FROM transactions WHERE to_id = ? OR from_id = ? ORDER BY inserted_at DESC",
         )
-        .bind(user_id)
+        .bind(&user_id)
+        .bind(&user_id)
         .fetch_all(pool)
         .await?;
         Ok(transactions.to_vec())
@@ -93,7 +94,7 @@ impl Mutation {
         let pool = context.data::<SqlitePool>().unwrap();
         let inserted = sqlx::query_as::<_, Transaction>(
             "
-            INSERT INTO transaction (id, from_id, to_id, amount, note)
+            INSERT INTO transactions (id, from_id, to_id, amount, note)
             VALUES (?, ?, ?, ?, ?)
             RETURNING *
         ",
