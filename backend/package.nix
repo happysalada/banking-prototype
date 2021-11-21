@@ -17,17 +17,16 @@ cargo_nix = import ./Cargo.nix { inherit pkgs;
 crate = cargo_nix.rootCrate.build;
 in
 stdenv.mkDerivation {
-  pname = "vf-graphql-sqlite-backend";
+  pname = "kraken-graphql-sqlite-backend";
   version = "0.0.1";
 
   src = ./.;
   dontUnpack = true;
   dontBuild = true;
   installPhase = ''
-    mkdir -p $out/{bin,migrations,seeds}
+    mkdir -p $out/{bin,migrations}
     cp ${crate}/bin/backend $out/bin
     cp -r $src/migrations $out
-    cp -r $src/seeds $out
   '';
   dontCheck = true;
   dontFixup = true;

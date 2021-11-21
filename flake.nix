@@ -9,7 +9,7 @@
   outputs = { self, nixpkgs, rust-overlay, ... }:
     let
       package_overlay = final: prev: {
-        banking-backend = import ./package.nix { pkgs = final; };
+        banking-backend = import ./backend/package.nix { pkgs = final; };
       };
       # taken from https://github.com/ngi-nix/project-template/blob/master/flake.nix
       # System types to support.

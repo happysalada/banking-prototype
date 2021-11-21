@@ -5,11 +5,11 @@ let
 in
 {
   options.services.vf-backend = {
-    enable = mkEnableOption "Valueflows graphql sqlite backend";
+    enable = mkEnableOption "Kraken graphql sqlite backend";
     stateDir = mkOption {
       type = types.str;
-      default = "/var/lib/vf";
-      example = "/var/lib/vf";
+      default = "/var/lib/kraken";
+      example = "/var/lib/kraken";
       description = ''
         location of folder for the application dynamic changes
       '';
@@ -41,8 +41,8 @@ in
           };
           port = mkOption {
             type = types.port;
-            default = 8080;
-            example = 8080;
+            default = 5059;
+            example = 5059;
             description = ''
               local port on which to run the server
             '';
@@ -53,15 +53,15 @@ in
   };
 
   config = mkIf serviceConfig.enable {
-    users.groups.vf = { };
-    users.users.vf = {
-      description = "vf user";
-      group = "vf";
+    users.groups.kraken = { };
+    users.users.kraken = {
+      description = "kraken user";
+      group = "kraken";
       isSystemUser = true;
     };
 
     systemd.services = lib.mapAttrs'
-      (name: instanceConfig: lib.nameValuePair "vf-backend-${name}"
+      (name: instanceConfig: lib.nameValuePair "kraken-backend-${name}"
         {
           wantedBy = [ "multi-user.target" ];
           description = "A backend with graphql and sqlite for valueflows";
@@ -75,19 +75,14 @@ in
               cd ${serviceConfig.package}
               ${pkgs.sqlx-cli}/bin/sqlx db create
               ${pkgs.sqlx-cli}/bin/sqlx migrate run
-              records=$(${pkgs.sqlite}/bin/sqlite3 "/var/lib/vf/${instanceConfig.dbName}.db" "SELECT COUNT(*) FROM agents")
-              if [[ $records == 0 ]]; then
-                  echo "Initializing db for service ${instanceConfig.dbName}"
-                  cat ${serviceConfig.package}/seeds/${instanceConfig.dbName}.sql | ${pkgs.sqlite}/bin/sqlite3 "/var/lib/vf/${instanceConfig.dbName}.db"
-              fi
             '';
             ExecStart = "${serviceConfig.package}/bin/backend";
             ExecStop = "${serviceConfig.package}/bin/backend";
 
-            User = "vf";
-            Group = "vf";
+            User = "kraken";
+            Group = "kraken";
 
-            StateDirectory = "vf";
+            StateDirectory = "kraken";
 
             PrivateTmp = true;
             ProtectSystem = "full";

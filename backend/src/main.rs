@@ -149,9 +149,13 @@ async fn main() -> Result<(), std::io::Error> {
         .data(schema)
         .with(cors);
 
-    println!("Playground: http://localhost:5051");
+    let port = std::env::var("HTTP_PORT")
+        .expect("missing http port")
+        .parse::<u16>()
+        .expect("http port should be a number");
+    println!("Playground: http://localhost:{}", &port);
 
-    let listener = TcpListener::bind("127.0.0.1:5051");
+    let listener = TcpListener::bind(format!("127.0.0.1:{}", port));
     let server = Server::new(listener).await?;
     server.run(app).await
 }
