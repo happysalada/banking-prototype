@@ -168,6 +168,7 @@ name = "backend"
 version = "0.1.0"
 dependencies = [
  "async-graphql",
+ "once_cell",
  "poem",
  "serde",
  "sqlx",

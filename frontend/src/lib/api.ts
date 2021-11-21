@@ -1,4 +1,4 @@
-const base = "http://localhost:5050";
+const base = "http://localhost:5051";
 
 export async function query(
   fetch: (info: RequestInfo, init?: RequestInit) => Promise<Response>,

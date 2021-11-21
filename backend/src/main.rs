@@ -2,7 +2,7 @@ use async_graphql::{
     http::{playground_source, GraphQLPlaygroundConfig},
     Context, EmptySubscription, FieldResult, Object, Request, Response, Schema,
 };
-use models::User;
+use models::{Transaction, User};
 use poem::{
     get, handler,
     http::Method,
@@ -37,6 +37,21 @@ impl Query {
                 .await?;
         Ok(user)
     }
+
+    async fn transactions<'a>(
+        &self,
+        context: &'a Context<'_>,
+        user_id: String,
+    ) -> FieldResult<Vec<Transaction>> {
+        let pool = context.data::<SqlitePool>().unwrap();
+        let transactions = sqlx::query_as::<_, Transaction>(
+            "SELECT * FROM transactions WHERE id = ? ORDER BY inserted_at DESC",
+        )
+        .bind(user_id)
+        .fetch_all(pool)
+        .await?;
+        Ok(transactions.to_vec())
+    }
 }
 
 struct Mutation;
@@ -61,6 +76,33 @@ impl Mutation {
         .bind(&ulid)
         .bind(name)
         .bind(email)
+        .fetch_one(pool)
+        .await?;
+        Ok(inserted)
+    }
+
+    async fn create_transaction(
+        &self,
+        context: &Context<'_>,
+        from_id: String,
+        to_id: String,
+        amount: i32,
+        note: Option<String>,
+    ) -> FieldResult<Transaction> {
+        let ulid = Ulid::new().to_string();
+        let pool = context.data::<SqlitePool>().unwrap();
+        let inserted = sqlx::query_as::<_, Transaction>(
+            "
+            INSERT INTO transaction (id, from_id, to_id, amount, note)
+            VALUES (?, ?, ?, ?, ?)
+            RETURNING *
+        ",
+        )
+        .bind(&ulid)
+        .bind(from_id)
+        .bind(to_id)
+        .bind(amount)
+        .bind(note)
         .fetch_one(pool)
         .await?;
         Ok(inserted)
@@ -106,9 +148,9 @@ async fn main() -> Result<(), std::io::Error> {
         .data(schema)
         .with(cors);
 
-    println!("Playground: http://localhost:5050");
+    println!("Playground: http://localhost:5051");
 
-    let listener = TcpListener::bind("127.0.0.1:5050");
+    let listener = TcpListener::bind("127.0.0.1:5051");
     let server = Server::new(listener).await?;
     server.run(app).await
 }

@@ -7,6 +7,7 @@
     const response = await query( fetch,
       `{
         user(userId: "${id}") { id, name, email } 
+        transactions(userId: "${id}") { id, fromId, toId, amount, note, insertedAt }
       }`
     );
 
@@ -21,10 +22,10 @@
           props: { flashMessage },
         };
       } else {
-        const { user } = data;
+        const { user, transactions } = data;
 
         return {
-          props: { user },
+          props: { user, transactions },
         };
       }
     } else {
@@ -39,8 +40,11 @@
 </script>
 
 <script lang="ts">
-  export let user;
+  import type { Transaction, User } from "$lib/types";
+  export let user: User;
+  export let transactions: Transaction[];
 </script>
+
 <div class="min-h-full">
   <!-- Off-canvas menu for mobile, show/hide based on off-canvas menu state. -->
   <div class="fixed inset-0 flex z-40 lg:hidden" role="dialog" aria-modal="true">
@@ -356,10 +360,7 @@
               </div>
             </div>
             <div class="mt-6 flex space-x-3 md:mt-0 md:ml-4">
-              <button type="button" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500">
-                Add money
-              </button>
-              <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500">
+              <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500">
                 Send money
               </button>
             </div>
@@ -389,7 +390,7 @@
                       </dt>
                       <dd>
                         <div class="text-lg font-medium text-gray-900">
-                          $30,659.45
+                          $ {transactions.reduce((total, {amount}) => total + amount, 0)}
                         </div>
                       </dd>
                     </dl>
@@ -416,6 +417,7 @@
         <!-- Activity list (smallest breakpoint only) -->
         <div class="shadow sm:hidden">
           <ul role="list" class="mt-2 divide-y divide-gray-200 overflow-hidden shadow sm:hidden">
+            {#each transactions as transaction (transaction.id)}
             <li>
               <a href="#" class="block px-4 py-4 bg-white hover:bg-gray-50">
                 <span class="flex items-center space-x-4">
@@ -425,9 +427,9 @@
                       <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
                     </svg>
                     <span class="flex flex-col text-gray-500 text-sm truncate">
-                      <span class="truncate">Payment to Molly Sanders</span>
-                      <span><span class="text-gray-900 font-medium">$20,000</span> USD</span>
-                      <time datetime="2020-07-11">July 11, 2020</time>
+                      <span class="truncate">{transaction.note}</span>
+                      <span><span class="text-gray-900 font-medium">${transaction.amount}</span> USD</span>
+                      <time datetime="2020-07-11">{transaction.insertedAt}</time>
                     </span>
                   </span>
                   <!-- Heroicon name: solid/chevron-right -->
@@ -437,6 +439,7 @@
                 </span>
               </a>
             </li>
+            {/each}
 
             <!-- More transactions... -->
           </ul>
@@ -476,6 +479,7 @@
                     </tr>
                   </thead>
                   <tbody class="bg-white divide-y divide-gray-200">
+                    {#each transactions as transaction (transaction.id)}
                     <tr class="bg-white">
                       <td class="max-w-0 w-full px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <div class="flex">
@@ -485,13 +489,13 @@
                               <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
                             </svg>
                             <p class="text-gray-500 truncate group-hover:text-gray-900">
-                              Payment to Molly Sanders
+                              {transaction.note}
                             </p>
                           </a>
                         </div>
                       </td>
                       <td class="px-6 py-4 text-right whitespace-nowrap text-sm text-gray-500">
-                        <span class="text-gray-900 font-medium">$20,000 </span>
+                        <span class="text-gray-900 font-medium">$ {transaction.amount}</span>
                         USD
                       </td>
                       <td class="hidden px-6 py-4 whitespace-nowrap text-sm text-gray-500 md:block">
@@ -500,9 +504,10 @@
                         </span>
                       </td>
                       <td class="px-6 py-4 text-right whitespace-nowrap text-sm text-gray-500">
-                        <time datetime="2020-07-11">July 11, 2020</time>
+                        <time datetime="2020-07-11">{transaction.insertedAt}</time>
                       </td>
                     </tr>
+                    {/each}
 
                     <!-- More transactions... -->
                   </tbody>
@@ -512,11 +517,11 @@
                   <div class="hidden sm:block">
                     <p class="text-sm text-gray-700">
                       Showing
-                      <span class="font-medium">1</span>
+                      <span class="font-medium">{Math.min(1, transactions.length)}</span>
                       to
-                      <span class="font-medium">10</span>
+                      <span class="font-medium">{Math.min(10, transactions.length)}</span>
                       of
-                      <span class="font-medium">20</span>
+                      <span class="font-medium">{transactions.length}</span>
                       results
                     </p>
                   </div>
