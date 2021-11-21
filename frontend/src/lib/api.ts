@@ -1,5 +1,23 @@
+const base = "http://localhost:5050";
+
+export async function query(
+  fetch: (info: RequestInfo, init?: RequestInit) => Promise<Response>,
+  query: string
+) {
+  return await fetch(`${base}/graphql`, {
+    method: "POST",
+    mode: "cors",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      query,
+    }),
+  });
+}
+
 export async function createUser({name, email}) {
-  return await fetch(`http://localhost:5050/graphql`, {
+  return await fetch(`${base}/graphql`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -15,3 +33,4 @@ export async function createUser({name, email}) {
     }),
   });
 }
+

@@ -1,6 +1,7 @@
 <script lang="ts">
   import Flash from '$lib/Flash.svelte';
   import { createUser } from "$lib/api";
+  import { goto } from "$app/navigation";
 
   let name = "";
   let email = "";
@@ -23,8 +24,9 @@
         console.error(flashMessage);
         return;
       }
+      const { createUser: {id} } = data;
+      goto(`/users/${id}`)
     } catch (error) {
-      console.log(error)
       flashMessage = error.toString();
     }
   }

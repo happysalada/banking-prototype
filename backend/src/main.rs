@@ -27,6 +27,16 @@ impl Query {
             .await?;
         Ok(users.to_vec())
     }
+
+    async fn user<'a>(&self, context: &'a Context<'_>, user_id: String) -> FieldResult<User> {
+        let pool = context.data::<SqlitePool>().unwrap();
+        let user =
+            sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = ? ORDER BY inserted_at DESC")
+                .bind(user_id)
+                .fetch_one(pool)
+                .await?;
+        Ok(user)
+    }
 }
 
 struct Mutation;
@@ -84,10 +94,7 @@ async fn main() -> Result<(), std::io::Error> {
     let schema = Schema::build(Query, Mutation, EmptySubscription)
         .data(pool)
         .finish();
-    let cors =
-        Cors::new()
-            .allow_origin("*")
-            .allow_methods([Method::POST, Method::GET, Method::OPTIONS]);
+    let cors = Cors::new().allow_methods([Method::POST, Method::GET, Method::OPTIONS]);
 
     let app = Route::new()
         .at(

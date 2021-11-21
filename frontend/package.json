@@ -12,11 +12,11 @@
   },
   "devDependencies": {
     "@sveltejs/kit": "next",
-    "@typescript-eslint/eslint-plugin": "^4.31.1",
-    "@typescript-eslint/parser": "^4.31.1",
+    "@typescript-eslint/eslint-plugin": "^5.4.0",
+    "@typescript-eslint/parser": "^5.4.0",
     "autoprefixer": "^10.4.0",
     "cssnano": "^5.0.11",
-    "eslint": "^7.32.0",
+    "eslint": "^8.2.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-svelte3": "^3.2.1",
     "postcss": "^8.3.11",
@@ -34,6 +34,7 @@
   },
   "type": "module",
   "dependencies": {
+    "@sveltejs/adapter-static": "^1.0.0-next.0",
     "@tailwindcss/forms": "^0.3.4"
   }
 }
