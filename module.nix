@@ -4,7 +4,7 @@ let
   serviceConfig = config.services.vf-backend;
 in
 {
-  options.services.vf-backend = {
+  options.services.kraken = {
     enable = mkEnableOption "Kraken graphql sqlite backend";
     stateDir = mkOption {
       type = types.str;
